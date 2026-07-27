@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finaldyeing的个人博客</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, PingFang SC, sans-serif;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* ========== 全局固定背景 全程不滚动 ========== */
+        .global-fixed-bg {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('Background.jpeg') center center / cover no-repeat;
+            z-index: -1;
+        }
+
+        /* 顶部导航栏 */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 999;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.45), transparent);
+        }
+        /* B站头像+昵称链接容器 */
+        .bili-logo-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .bili-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+        .bili-logo-link:hover .bili-avatar {
+            box-shadow: 0 0 14px rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+        .logo-name {
+            font-size: 36px;
+            color: #ffffff;
+            font-weight: 600;
+            transition: opacity 0.25s;
+        }
+        .bili-logo-link:hover .logo-name {
+            opacity: 0.75;
+        }
+        .menu-toggle {
+            width: 40px;
+            height: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .menu-toggle span {
+            width: 100%;
+            height: 3px;
+            background-color: #fff;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        /* ========== 全屏弹窗菜单 ========== */
+        .fullscreen-menu {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.75);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+        .fullscreen-menu.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .menu-header {
+            position: absolute;
+            top:24px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 32px;
+            align-items: center;
+        }
+        .menu-close {
+            font-size: 46px;
+            color:#fff;
+            cursor: pointer;
+            line-height:1;
+        }
+        .menu-list {
+            display:flex;
+            flex-direction: column;
+            gap:34px;
+            text-align:center;
+        }
+        .menu-list a {
+            color:#fff;
+            font-size:26px;
+            text-decoration:none;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:12px;
+            transition: 0.25s;
+        }
+        .menu-list a:hover {
+            opacity:0.65;
+        }
+
+        /* 每一屏 100vh 全屏 */
+        .section {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        /* 每一页统一深色蒙版，不覆盖全局背景 */
+        .section::after {
+            content:"";
+            position:absolute;
+            inset:0;
+            background-color: rgba(10,12,15,0.68);
+            z-index:1;
+        }
+
+        /* 首页欢迎页面 */
+        .page-hero {
+        }
+        .welcome-text {
+            position: relative;
+            z-index: 2;
+            font-size: 52px;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        /* 第二屏：博客文章列表页面 */
+        .page-posts {
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            z-index:2;
+        }
+        .title-h2 {
+        color:#eee;
+        font-size:24px;
+        margin-bottom:24px;
+        border-left:4px solid #728685;
+        padding-left:14px;
+}
+.article-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(14px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:18px;
+    padding:18px; /* 原26px 缩小卡片内边距 */
+    margin-bottom:14px; /* 原20px 卡片之间间距缩小 */
+    transition: 0.35s ease;
+}
+.article-card:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-4px);
+}
+.article-card h3 {
+    color:#fff;
+    font-size:17px; /* 原20px 缩小卡片标题 */
+    margin-bottom:6px; /* 原8px */
+}
+.article-card p {
+    color:#bbbbbb;
+    line-height:1.6;
+    user-select: text;
+    -webkit-user-select: text;
+    font-size:15px; /* 正文缩小 */
+}
+/* 视频高度缩小 */
+.card-video {
+    width: 100%;
+    height: 160px; /* 原200px 电脑端视频降低高度 */
+    object-fit: cover;
+    border-radius:12px;
+    margin-bottom:14px;
+    transition: transform 0.3s ease;
+}
+.article-card:hover .card-video {
+    transform: scale(1.02);
+}
+        /* 第三屏：暗区突围专题页面 */
+        .page-about {
+        }
+        .darkzone-wrap {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 900px;
+        }
+        .card-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius:12px;
+            margin-bottom:16px;
+            transition: transform 0.3s ease;
+        }
+        .article-card:hover .card-img {
+            transform: scale(1.02);
+        }
+
+        /* 底部向下提示箭头 */
+        .scroll-hint {
+            position:absolute;
+            bottom:36px;
+            left:50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+        .scroll-hint svg {
+            fill:#ffffff;
+            opacity:0.7;
+            animation: bounce 2.2s infinite ease-in-out;
+        }
+        @keyframes bounce {
+            0%,100% {transform: translateY(0);}
+            50% {transform: translateY(10px);}
+        }
+
+        /* 移动端适配 */
+        @media(max-width: 640px){
+            .bili-avatar {
+                width: 36px;
+                height: 36px;
+            }
+            .logo-name {font-size:28px;}
+            .welcome-text {font-size:40px;}
+            header {padding:20px 22px;}
+            .menu-list a {font-size:22px;}
+            .card-img {height:140px;}
+        }
+    </style>
+</head>
+<body>
+    <!-- 全局固定背景，所有页面共用、滚动不移动 -->
+    <div class="global-fixed-bg"></div>
+
+    <!-- 顶部导航栏 -->
+    <header>
+        <!-- 左上角B站头像+昵称 点击跳转B站主页 -->
+        <a class="bili-logo-link" href="https://space.bilibili.com/3546667068426732" target="_blank">
+            <img class="bili-avatar" src="avatar.jpg" alt="B站头像">
+            <div class="logo-name">Finaldyeing</div>
+        </a>
+        <div class="menu-toggle" id="openMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- 全屏弹出菜单 -->
+    <div class="fullscreen-menu" id="menuBox">
+        <div class="menu-header">
+            <!-- 菜单内同步同款头像昵称 -->
+            <a class="bili-logo-link" href="https://space.bilibili.com/3546667068426732" target="_blank">
+                <img class="bili-avatar" src="avatar.jpg" alt="B站头像">
+                <div class="logo-name">Finaldyeing</div>
+            </a>
+            <div class="menu-close" id="closeMenu">✕</div>
+        </div>
+        <div class="menu-list">
+            <a href="#page1">🏠 首页</a>
+            <a href="#page2">🗃️ 游戏攻略</a>
+            <a href="#">🔲 分类</a>
+            <a href="#">🏷️ 标签</a>
+            <a href="#page3">🎯 暗区突围</a>
+            <a href="#">🔗 友链</a>
+            <a href="#">📄 留言板</a>
+            <a href="#">🔍</a>
+            <a href="#">☀️</a>
+        </div>
+    </div>
+
+    <!-- 全屏滚动容器 -->
+    <div id="fullpage">
+        <!-- 第一屏：首页欢迎 -->
+        <div class="section page-hero" data-anchor="page1">
+            <div class="welcome-text">欢迎_</div>
+            <div class="scroll-hint">
+                <svg width="32" height="32" viewBox="0 0 24 24">
+                    <path d="M12 16l-6-6h12z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 第二屏：文章列表 -->
+<div class="section page-posts" data-anchor="page2">
+    <div class="container">
+        <h2 class="title-h2">暗区突围 · 资讯攻略</h2>
+        <div class="article-card">
+            <h3>地图物资点位大全</h3>
+            <p>农场、山谷、北部山区、封锁区高价值物资刷新位置汇总，标记保险箱、武器箱、大衣刷新点，新手快速摸清搜刮路线，高效积累启动资金。</p>
+        </div>
+        <div class="article-card">
+            <h3>枪械改装思路分享</h3>
+            <p>低成本枪械满改方案，兼顾后坐控制、人机工效与射程。冲锋枪、突击步枪、狙击枪配件搭配参考，零门槛打造性价比作战武器。</p>
+        </div>
+        <div class="article-card">
+            <h3>撤离与战术思路</h3>
+            <p>常规撤离点、随机撤离点机制讲解，跑刀、伏击、架枪各类打法解析。学会判断战局风险，提升成功撤离率，避免满载翻车。</p>
+        </div>
+    </div>
+</div>
+
+        <!-- 第三屏：暗区突围专题（带游戏配图） -->
+        <div class="section page-about" data-anchor="page3">
+            <div class="darkzone-wrap">
+                <h2 class="title-h2">暗区突围专题</h2>
+                <div class="article-card">
+                    <img class="card-img" src="picture/gun.jpeg" alt="暗区突围枪械">
+                    <p style="color:#ddd;font-size:17px;line-height:1.8;">
+                        专注暗区突围全内容攻略分享<br>
+                        地图物资路线、枪械改装、撤离技巧、跑刀思路、农场/山谷/封锁区打法<br>
+                        各类任务流程、市场物价分析、新手避坑指南持续更新<br>
+                        分享实战思路与对局心得，一起低成本起装，安全撤离带出高价值物资。
+                    </p>
+                </div>
+                <div class="article-card" style="margin-top:20px;">
+                    <img class="card-img" src="picture/farm.jpg" alt="暗区农场地图">
+                    <h3>内容更新方向</h3>
+                    <p>1. 各地图高价值物资刷新点位<br>
+                    2. 主流枪械满改配件搭配方案<br>
+                    3. 低成本跑刀、农场快速赚钱套路<br>
+                    4. 封锁区、强化封锁进阶打法<br>
+                    5. 赛季任务、活动完整流程攻略</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化全屏滚动
+        new fullpage('#fullpage', {
+            autoScrolling: true,
+            scrollingSpeed: 750,
+            easing: 'ease-out',
+            fitToSection: true,
+            touchSensitivity: 10,
+            navigation: false,
+        });
+
+        // =========菜单弹窗逻辑==========
+        const menuBox = document.getElementById('menuBox');
+        const openMenuBtn = document.getElementById('openMenu');
+        const closeMenuBtn = document.getElementById('closeMenu');
+
+        // 打开菜单
+        openMenuBtn.addEventListener('click', ()=>{
+            menuBox.classList.add('open');
+        })
+        // 关闭菜单
+        closeMenuBtn.addEventListener('click', ()=>{
+            menuBox.classList.remove('open');
+        })
+        // 点击菜单链接自动关闭弹窗
+        document.querySelectorAll('.menu-list a').forEach(item=>{
+            item.addEventListener('click',()=>{
+                menuBox.classList.remove('open');
+            })
+        })
+    </script>
+</body>
+</html>
